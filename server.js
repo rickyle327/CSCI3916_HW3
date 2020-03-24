@@ -5,6 +5,7 @@ var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
+var User = require('./Movies');
 
 var app = express();
 module.exports = app; // for testing
@@ -92,10 +93,42 @@ router.post('/signin', function(req, res) {
                 res.status(401).send({success: false, message: 'Authentication failed.'});
             }
         });
-
-
     });
 });
+
+router.route('/movie')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        console.log(req.body);
+        var movie = new Movie();
+        movie.title = req.body.title;
+        movie.yearReleased = req.body.yearReleased;
+        movie.genre = req.body.genre;
+        movie.actors = req.body.actors;
+        // save the movie
+        if (Movie.findOne({title: movie.title}) != null) {
+            movie.save(function (err) {
+                if (err) {
+                    // duplicate entry
+                    if (err.code == 11000)
+                        res.json({success: false, message: 'A movie with that name already exists. '});
+                    else
+                        return res.send(err);
+                }else res.json({success: true, message: 'Movie created!'});
+            });
+        };
+    });
+
+router.route('/movie/:movieId')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        var id = req.params.movieId;
+        Movie.findById(id, function(err, movie) {
+            if (err) res.send(err);
+
+            var movieJson = JSON.stringify(movie);
+            // return that user
+            res.json(movie);
+        });
+    });
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
