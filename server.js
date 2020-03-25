@@ -5,7 +5,7 @@ var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
-var User = require('./Movies');
+var Movie = require('./Movies');
 
 var app = express();
 module.exports = app; // for testing
@@ -116,6 +116,31 @@ router.route('/movie')
                 }else res.json({success: true, message: 'Movie created!'});
             });
         };
+    })
+
+    .delete(authJwtController.isAuthenticated, function (req, res) {
+        Movie.deleteOne({title: req.body.title}, function(err, obj) {
+            if (err) res.send(err);
+            else res.json({success: true, message: 'Movie deleted!'});
+        })
+    })
+
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var qtitle = req.query.title;
+        if (Movie.findOne({title: qtitle}) != null) {
+            var newVals = { $set: req.body };
+            Movie.updateOne({title: qtitle}, newVals, function(err, obj) {
+                if (err) res.send(err);
+                else res.json({success: true, message: 'Movie updated!'});
+            })
+        };
+    })
+
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        Movie.find(function (err, movie) {
+            if(err) res.send(err);
+            res.json(movie);
+        })
     });
 
 router.route('/movie/:movieId')
